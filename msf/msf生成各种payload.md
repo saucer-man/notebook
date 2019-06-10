@@ -1,2 +1,2 @@
-# msf常用语句
+# msf生成各种payload
 
