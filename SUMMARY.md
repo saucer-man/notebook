@@ -6,7 +6,7 @@
 
 ## MSF
 
-* [msf常用语句](msf/msf-chang-yong-yu-ju.md)
-* [msf生成payload](msf/msf-sheng-cheng-payload.md)
-* [meterpreter常用语句](msf/meterpreter-chang-yong-yu-ju.md)
+* [msf常用语句](msf/msf常用语句.md)
+* [msf生成payload](msf/msf生成payload.md)
+* [meterpreter常用语句](msf/meterpreter常用语句.md)
 
