@@ -1,8 +1,14 @@
-# 目录
+# 介绍
 
-* [1.web安全](web-an-quan/)
-  * [msf生成各种payload](web-an-quan/msf-sheng-cheng-ge-zhong-payload.md)
-  * [实现交互式shell的几种方式](web-an-quan/shi-xian-jiao-hu-shi-shell-de-ji-zhong-fang-shi.md)
-* [2.其他](https://github.com/saucer-man/notebook/tree/b0396d3f293ff3497f4339dbd6a6bbbc9908e23a/其他/README.md)
-  * [git命令](2.-qi-ta/git-ming-ling.md)
+**介绍**
+
+这里是saucerman的学习笔记。内容将包括web安全，内网渗透，二进制安全，以及其他种种计算机相关内容。
+
+这里只记录了一些相对简短的知识点，因为内容比较多且杂，所以想要找个地记录一下。也将会包含我发现的小tricks。
+
+更多内容，关于访问[我的博客](https://saucer-man.com)
+
+**发现有误？**
+
+由于本人能力尚浅，难免会发生错误的笔记，欢迎指正。
 
