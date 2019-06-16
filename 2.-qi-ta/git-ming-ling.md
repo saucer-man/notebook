@@ -280,6 +280,15 @@ $ git revert [commit]
 # 暂时将未提交的变化移除，稍后再移入
 $ git stash
 $ git stash pop
+
+
+# 清除Github提交历史记录
+# 先clone到本地，再查看提交日志
+$ git log 
+# 回退到这个敏感信息提交之前的状态
+$ git reset --hard 8628628991470b26e698d98e986a54fa6b5f4352
+# push到github
+git push origin HEAD --force
 ```
 
 ## 10. 参考
