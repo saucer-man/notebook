@@ -12,7 +12,7 @@ pip install --upgrade pwntools
 ### 全局设置
 
 ```text
-context.log_level = 'debug'  # 
+context.log_level = 'debug'  # 调试级别
 context.arch      = 'i386' # 架构
 context.os        = 'linux' # 操作系统
 
