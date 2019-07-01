@@ -10,6 +10,7 @@ echo "source ~/peda/peda.py" >> ~/.gdbinit
 ### gdb-peda 命令
 
 ```text
+disass/disassemble func # 查看反汇编
 pattern_create 200 生成字符串模板
 set args 设置参数
 pattern_offset xxxxx 查看偏移
