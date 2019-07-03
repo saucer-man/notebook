@@ -1,13 +1,13 @@
 # gdb调试相关
 
-### 安装peda
+## 安装peda
 
 ```text
 git clone https://github.com/longld/peda.git ~/peda
 echo "source ~/peda/peda.py" >> ~/.gdbinit
 ```
 
-### gdb-peda 命令
+## gdb-peda 命令
 
 ```text
 disass/disassemble func # 查看反汇编
@@ -24,7 +24,7 @@ p system 寻找libc总system函数地址
 find "/bin/sh" 寻找字符串地址
 ```
 
-### ASLR
+## ASLR
 
 ```text
 # ASLR设置：
@@ -35,7 +35,7 @@ find "/bin/sh" 寻找字符串地址
   echo 0 > /proc/sys/kernel/randomize_va_space
 ```
 
-### 转储
+## 转储
 
 ```text
 # 转储设置：
