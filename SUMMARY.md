@@ -11,6 +11,7 @@
   * [脏牛提权](web-an-quan/zang-niu-ti-quan.md)
   * [mimikatz用法](web-an-quan/mimikatz-yong-fa.md)
   * [win提权](web-an-quan/lian-jie-win-yuan-cheng-zhuo-mian.md)
+  * [cmd下载文件](web-an-quan/cmd-xia-zai-wen-jian.md)
 * [2.二进制安全](er-jin-zhi-an-quan/README.md)
   * [gdb调试相关](er-jin-zhi-an-quan/gdb-ming-ling.md)
   * [pwntools基本用法](er-jin-zhi-an-quan/pwntools-ji-ben-yong-fa.md)
